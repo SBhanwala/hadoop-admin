@@ -1,0 +1,58 @@
+This is a simle bach script to extract information from 
+"bin/hadoop dfsadmin -report" &
+"bin/hadoop fsck / -blocks -files"
+and it displays 
+-how many datanodes are running
+-when did they last contact namenode
+-are there any blocks under replicated
+-are there any blocks over replicated
+-how many blocks should be replicated
+
+#!/bin/bash
+
+
+echo "============================="
+
+echo "monitoring started"
+
+date
+
+sudo rm -rf dfsstat.txt
+
+bin/hadoop dfsadmin -report > dfsstat.txt
+
+cat dfsstat.txt | grep 'Datanodes available' --color
+
+cat dfsstat.txt | grep 'Name:' --color
+
+cat dfsstat.txt | grep 'Last contact' --color
+
+sudo rm -rf dfsstat1.txt
+
+date
+
+bin/hadoop dfsadmin -report > dfsstat1.txt
+
+cat dfsstat1.txt | grep 'Datanodes available' --color
+
+cat dfsstat1.txt | grep 'Name:' --color
+
+cat dfsstat1.txt | grep 'Last contact' --color
+
+echo "########@@##########"
+
+sudo rm -rf fsckstat.txt
+
+bin/hadoop fsck / -blocks > fsckstat.txt
+
+cat fsckstat.txt | grep 'Under-replicated blocks' --color
+
+cat fsckstat.txt | grep 'Over-replicated blocks' --color
+
+cat fsckstat.txt | grep 'Minimally replicated blocks' --color
+
+
+
+
+
+echo "monitoring ends"

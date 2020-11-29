@@ -1,0 +1,29 @@
+bin/hadoop dfsadmin -report
+bin/hadoop fs ( -ls -mkdir -copyFromLocal -put -D dfs.replication=value -rmr -lsr -cp)
+$ hadoop fs -setrep -R -w 2 / --(set the replication to lower/higher for a specific file 
+or for all files in HDFS)
+bin/hadoop fsck / -blocks
+bin/hadoop fsck / -blocks -files
+bin/hadoop dfsadmin -saveNamespace
+bin/hadoop dfsadmin -safemode ( enter get leave wait)
+bin/hadoop dfsadmin -metasave
+bin/hadoop secondarynamenode -checkpoint force
+bin/hadoop namenode -importCheckpoint
+bin/hadoop distcp hdfs://xx:9000/file hdfs://xy:9000/filecpy
+bin/hadoop dfsadmin -setSpaceQuota xxxx /path
+bin/hadoop dfsadmin -SetQuota xx /path
+bin/hadoop sqoop <import|import-all-table|list databases|list tables> --connect 
+jdbc:mysql://hostname/ --username xx -P --m 1
+
+To disable firewalls
+sudo iptables --flush
+sudo service iptables stop
+sudo chkconfig iptables off
+
+To restart network
+sudo /etc/init.d/network restart
+or
+sudo service network restart
+or
+ifdown eth0
+ipup eth0

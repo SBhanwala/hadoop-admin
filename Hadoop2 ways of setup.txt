@@ -1,0 +1,62 @@
+hadoop v2
+-------------
+4 ways of setting up
+1. upgrade from v1 to v2
+   Note** SNN will exist
+2. download tar file of h2 and edit and format and start
+   (1 NN only{although multiple nn's possible in h2}
+    and no features enabled like Federation/HA)
+   Note** SNN will exist
+3. Hadoop2 setup with fedeRation {multiple NN's}
+   Note** SNN will exist ( for each NN one SNN)
+4. hadoop2 with High Availability{2 NN's-1:Active ,1-Standby}
+   Note** SNN will not be allowed here.
+   Note** if with ZOOKEEPER(AUTOMATIC FAILOVER)
+          if without ZK(only manual failover possible)
+
+======================================================
+Federation:
+
+	NN1                          NN2                           NN3 ....
+hdfs format namenode        hdfs format namenode -clusterIDx     |||ly
+NSID1,clusterIDx,bpoolid1   NSID2,clusteridx, bpoolid2           NSID3,clusteridx
+							         bpoolid3
+
+	DN				DN				DN
+
+/abc/datax/current/VERSION------>clusterid,bpoolid
+/abc/datax/current/BPPOOLID/current/VERSION--------->NSID,BPOOLID
+
+dn1
+/abc/data1/current/bpoolid1/../../blkA
+/abc/data1/current/bpoolid2/../../blkA				
+/abc/data1/current/bpoolid3/../../blks
+
+dn1
+/abc/data2/current/bpoolid1/../../blkA
+/abc/data2/current/bpoolid2/../../blkA
+/abc/data2/current/bpoolid3/../../blks
+
+dn1
+/abc/data3/current/bpoolid1/../../blkA
+/abc/data3/current/bpoolid2/../../blkA
+/abc/data3/current/bpoolid3/../../blks
+
+
+High Availability
+=====================
+  Using NFS						Using QJM
+Here we need NFS					Here we need nodes to run 
+						        journal node daemons
+			NFS								JN1  Jn2 JN3
+nn1                                 nn2						NN1(A)         NN2(S)
+nsid,clusterid,bpoolid            no formatting again
+				  bootstrap process which gets the metadata from nn1	
+
+
+
+zk: if no, then we make one nn1 as active and one nn as standby,
+manual failover possible.
+
+zk: if yes, zkfc : makes one nn1 as active and one nn as standby
+automatic failover taken care.

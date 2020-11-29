@@ -1,0 +1,152 @@
+Commission/Decommission on a adhoc basis
+
+Suppose we have two datanodes already (these are my hostnames)
+aj20
+aj4
+
+To Decommission
+Adhoc basis
+Poweroff machine aj4 or stop datanode on aj4
+Within few minutes NN will realize the powered off machine is not available.
+
+To commission
+setup aj15-java,ssh access,unique ip address, hadoop package, 
+           edited config files
+           (core-site---nn , mapred-site--jt,hdfs-site--path for dn,tt & masters,slaves being empty)
+
+bin/hadoop-daemon.sh start datanode
+bin/hadoop-daemon.sh start tasktracker
+.......
+new dn pings nn, sends heart beat, sends block information
+nn recognizes and considers DN added to the cluster
+
+.......
+confirm through dfsadmin -report
+====================================================================
+Remember rack awareness
+
+WE update machines in topology.data file which is read by topology.sh
+If we didnot add new dn's ipaddress in topology.data file,
+when we try to add it , DNs will not start with a message showing in 
+datanode log "cannot add a non rack dn in a rack aware cluster"
+------------
+
+Refer to the following scenario
+Topologies are unfortunately cached in Hadoop today and not refreshed
+until restart.
+
+So if you add a DN before properly configuring its topology, its
+improper default will stick and you'll need to restart the NN to make
+it lose that cache. 
+
+Perhaps you may also want to configure a better default, that suits
+your regular topology levels, such that even if you make a mistake,
+the node still starts up.
+
+On Thu, Nov 22, 2012 at 7:07 AM, Maoke <fibrib@gmail.com> wrote:
+> hi all,
+>
+> is there anyone having experience with adding a new datanode into a
+> rack-aware cluster without restarting the namenode, in cdh4 distribution? as
+> it is said that adding a new datanode is a hot operation that can be done
+> when the cluster is online.
+>
+> i tried that but it looked not working until i restarted the namenode. what
+> i did is:
+>
+> (the cluster has had 4 data nodes and i am adding the 5th)
+> 1. add the new node (qa-str-ms02.p-qa) into /etc/hadoop/conf/hosts.include,
+> and into /etc/hadoop/conf/slaves
+> 2. add the rack entries for qa-str-ms02.p-qa (192.168.159.52) into
+> /etc/hadoop/topology.data that topology.sh, the topology script, is
+> checking, confirming that ./topology.sh qa-str-ms02.p-qa works well. the
+> rack entry looks like:
+>
+>    qa-str-ms02.p-qa                 /dc1/switch1/rack1/node5
+>    192.168.159.52                  /dc1/switch1/rack1/node5
+>
+> 3. on the namenode: sudo -u hdfs hdfs dfsadmin -refreshNodes
+> 4. on the new datanode: sudo /etc/init.d/hadoop-hdfs-datanode start
+>
+> however, the datanode failed to handshake with the namenode and it soon
+> exited. the namenode log said:
+>
+> 2012-11-21 18:06:11,946 INFO org.apache.hadoop.net.NetworkTopology: Removing
+> a n
+>
+> ode: /default-rack/192.168.159.52:50010
+> 2012-11-21 18:06:11,946 INFO org.apache.hadoop.net.NetworkTopology: Adding a
+> new node: /default-rack/192.168.159.52:50010
+>
+> 2012-11-21 18:06:11,946 ERROR org.apache.hadoop.net.NetworkTopology: Error:
+> can't add leaf node at depth 2 to topology:
+> Number of racks: 3
+> Expected number of leaves:3
+> /dc1/switch1/rack1/node1/192.168.159.101:50010
+>
+> /dc1/switch1/rack1/node2/192.168.159.102:50010
+> /dc1/switch1/rack1/node3/192.168.159.103:50010
+>
+> 2012-11-21 18:06:11,946 WARN org.apache.hadoop.ipc.Server: IPC Server
+> handler 4 on 8020, call
+> org.apache.hadoop.hdfs.server.protocol.DatanodeProtocol.registerDatanode
+> from 192.168.159.52:53968: error:
+> org.apache.hadoop.net.NetworkTopology$InvalidTopologyException: Invalid
+> network topology. You cannot have a rack and a non-rack node at the same
+> level of the network topology.
+>
+> org.apache.hadoop.net.NetworkTopology$InvalidTopologyException: Invalid
+> network topology. You cannot have a rack and a non-rack node at the same
+> level of the network topology.
+>         at
+> org.apache.hadoop.net.NetworkTopology.add(NetworkTopology.java:365)
+>
+>         at
+> org.apache.hadoop.hdfs.server.blockmanagement.DatanodeManager.registerDatanode(DatanodeManager.java:619)
+>         at
+> org.apache.hadoop.hdfs.server.namenode.FSNamesystem.registerDatanode(FSNamesystem.java:3358)
+>
+>         at
+> org.apache.hadoop.hdfs.server.namenode.NameNodeRpcServer.registerDatanode(NameNodeRpcServer.java:854)
+>         at
+> org.apache.hadoop.hdfs.protocolPB.DatanodeProtocolServerSideTranslatorPB.registerDatanode
+(DatanodeProtocolServerSideTranslatorPB.java:91)
+>
+>         at
+> org.apache.hadoop.hdfs.protocol.proto.DatanodeProtocolProtos$DatanodeProtocolService$2.callBlockingMethod
+(DatanodeProtocolProtos.java:20018)
+>         at
+> org.apache.hadoop.ipc.ProtobufRpcEngine$Server$ProtoBufRpcInvoker.call(ProtobufRpcEngine.java:453)
+>
+>         at org.apache.hadoop.ipc.RPC$Server.call(RPC.java:898)
+>         at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1693)
+>         at org.apache.hadoop.ipc.Server$Handler$1.run(Server.java:1689)
+>         at java.security.AccessController.doPrivileged(Native Method)
+>
+>         at javax.security.auth.Subject.doAs(Subject.java:396)
+>         at
+> org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1332)
+>         at org.apache.hadoop.ipc.Server$Handler.run(Server.java:1687)
+>
+>
+> it seems that the newly added topology information didn't work.
+>
+> when i changed the operation in the following steps:
+>
+> 1. add the new node (qa-str-ms02.p-qa) into /etc/hadoop/conf/hosts.include,
+> and into /etc/hadoop/conf/slaves
+>
+> 2. add the rack entries for qa-str-ms02.p-qa into /etc/hadoop/topology.data
+> that topology.sh, the topology script, is checking, confirming that
+> ./topology.sh qa-str-ms02.p-qa works well.
+> 3. on the namenode: sudo /etc/init.d/hadoop-hdfs-namenode stop && sudo
+> /etc/init.d/hadoop-hdfs-namenode start
+> 4. on the new datanode: sudo /etc/init.d/hadoop-hdfs-datanode start
+>
+> then everything is ok and the new node was added into the cluster according
+> to dfsadmin -report.
+>
+> however, the operation of restarting namenode is unwanted. does anyone have
+> any comments or recommendations? thanks a lot in advance!
+
+

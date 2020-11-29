@@ -1,0 +1,64 @@
+Problem statement: You have a cluster running with single metadata path mentioned under
+dfs.name.dir . If you decide to start running your cluster with dual metadata path to ensure more
+fault tolerance and make your cluster more safe,how would you do it.?
+
+Currently you have 
+<property>
+<name>dfs.name.dir</name>
+<value>/abc/name</value>
+</property>
+
+/abc/name----has your meta deta
+
+Now create a directory under root or your preferred location.
+/abc/name2---this would have your second copy of metadata
+
+Give ownership to your hadoop admin userid ,like 
+sudo chown -R hduser:hadoop /abc/name2
+
+Now our task is get metadata in this path
+
+so,stop your namenode
+bin/hadoop-daemon.sh stop namenode
+
+edit your hdfs-site.xml to add second path
+
+<property>
+<name>dfs.name.dir</name>
+<value>/abc/name2</value>------------->new path
+</property>
+
+add one more parameter
+</property>
+<name>fs.checkpoint.dir</name>
+<value>/abc/name</value>----------------------->we alredy have our metadata here
+</property>
+
+save it..
+now 
+from your hadoop path
+/usr/local/hadoop
+
+give a command
+bin/hadoop namenode -importCheckpoint
+
+This starts your namenode and also brings metadata from existing path into new path
+confirm if /abc/name2 has copy of metadata
+
+trying stopping namenode,it gives no namenode to stop
+kill -9 PID of NN
+
+now edits your hdfs-site.xml again
+no fs.checkpoint.dir paramter required
+
+and dfs.name.dir
+will have
+<value>/abc/name,/abc/name2</value>
+
+save
+start your namenode
+
+Result: You have NN running with dual metadata path
+
+Optionally: you could have mounted /abc/name2 on NFS
+(as explained in "command list for hadoop components and HA")

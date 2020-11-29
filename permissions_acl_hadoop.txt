@@ -1,0 +1,87 @@
+cat /etc/passwd
+
+create user::
+[hadoop@c1 ~]$ sudo groupadd hdfs
+[sudo] password for hadoop: 
+[hadoop@c1 ~]$ sudo addduser hdfs
+sudo: addduser: command not found
+[hadoop@c1 ~]$ sudo adduser hdfs
+adduser: group hdfs exists - if you want to add this user to that group, use -g.
+[hadoop@c1 ~]$ sudo useradd hdfs
+useradd: group hdfs exists - if you want to add this user to that group, use -g.
+[hadoop@c1 ~]$ sudo useradd hdfs -g hdfs
+[hadoop@c1 ~]$ passwd hdfs
+passwd: Only root can specify a user name.
+[hadoop@c1 ~]$ sudo passwd hdfs
+Changing password for user hdfs.
+New password: 
+BAD PASSWORD: The password is shorter than 8 characters
+Retype new password: 
+passwd: all authentication tokens updated successfully.
+[hadoop@c1 ~]$ 
+
+
+
+===
+[hadoop@c1 hadoop]$ bin/hdfs dfs -ls /
+Found 5 items
+drwxr-xr-x   - hadoop hadoop          0 2019-06-01 16:21 /books
+drwxr-xr-x   - hadoop hadoop          0 2019-05-16 13:39 /customers
+drwxr-xr-x   - hadoop hadoop          0 2019-05-16 18:39 /products
+drwxrwxrwx   - hadoop hadoop          0 2019-05-20 13:43 /tmp
+drwxr-xr-x   - hadoop hadoop          0 2019-06-01 09:42 /user
+[hadoop@c1 hadoop]$ bin/hdfs dfs -getfacl /books
+# file: /books
+# owner: hadoop
+# group: hadoop
+user::rwx
+group::r-x
+other::r-x
+
+[hadoop@c1 hadoop]$ bin/hdfs dfs -setfacl -R -m user:hdfs:rw- /books
+[hadoop@c1 hadoop]$ bin/hdfs dfs -getfacl /books
+# file: /books
+# owner: hadoop
+# group: hadoop
+user::rwx
+user:hdfs:rw-
+group::r-x
+mask::rwx
+other::r-x
+
+[hadoop@c1 hadoop]$ bin/hdfs dfs -setfacl -x user:hdfs /books
+[hadoop@c1 hadoop]$ bin/hdfs dfs -getfacl /books
+# file: /books
+# owner: hadoop
+# group: hadoop
+user::rwx
+group::r-x
+mask::r-x
+other::r-x
+
+
+==================
+bin/hdfs dfs -chmod 640 /books
+
+[hadoop@c1 hadoop]$ bin/hdfs dfsadmin -refreshUserToGroupsMappings
+Refresh user to groups mapping successful for c1/192.168.1.40:8020
+Refresh user to groups mapping successful for c2/192.168.1.41:8020
+================
+fs.permissions is the property which can be used to enable/disable HDFS ACL (simple permission). With dfs.permission set to false any user can create/delete files/directories anywhere in HDFS.
+
+With this property set to false, You can access all other Hadoop services such as Hive, Pig etc.
+
+
+
+==========
+
+bin/hdfs dfs -setfacl -R -m user:hdfs:rwx /
+
+bin/hdfs dfs -setfacl -R -m user:hdfs:rwx /
+===
+bin/hadoop fs -ls /
+
+
+===
+[hdfs@c1 hadoop]$ bin/hadoop fs -ls /
+ls: Permission denied: user=hdfs, access=READ_EXECUTE, inode="/":hadoop:hadoop:drw-r-x---

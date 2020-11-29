@@ -1,0 +1,187 @@
+hadv1:namenode,datanode,jobtracker,tasktracker and secondarynamenode
+v1/mrv1:
+storage related daemons: NN,DN,SNN
+Processing related daemons: JT,TT
+
+Cloudera: HDFS service-Roles:NN,DN,SNN
+          Mapreduce service-Roles:JT,TT
+
+Hortonworks: HDFS service-components:NN,DN,SNN
+          Mapreduce service-components:JT,TT
+
+hadv2:namenode,datanode,Resourcemanager,nodemanager,Appmaster and secondarynamenode(yes if federation)
+,no(if HA)
+v2/mrv2:
+storage related daemons: NN,DN,SNN
+Processing related daemons: RM,NM
+
+Similarly like hadv1 as mentioned above             
+Note** if you dont mention the paths, each daemons uses system /tmp directory to store the data.
+m1-nn
+/abc/name					
+
+m2-JT
+
+m3-SNN,DN,TT
+/abc/snnname
+/abc/data1
+
+m4-DN,TT                                          
+/abc/data2                                                   
+
+m5-DN,TT
+/abc/data3  
+===================
+Download hadoop on all machines, edit the config files.
+Before u start ur cluster,formatting of NN is mandatory
+
+m1-NN (10 am)---we format our NN
+/abc/name---in disk of nn
+edits---to capture changes (4 bytes)
+fsimage---consistent image of HDFS ( 112 bytes)---this was status of what we have on hdfs
+
+start ur cluster...
+all ur daemons running..
+
+NN<================DN DN DN DN...(starts sending HB every 3 sec)
+JT<=================TT,TT,TT,TT...sending HB
+
+10:05am
+start writing data to cluster
+hadoop.txt(file of 128mb): based on blksize of 64mb-2 blks created
+edits----1048750 bytes (showing some change to hdfs has happened)
+fsimage---112 bytes--as of 10:05am
+NN<================DN DN DN DN(send block report every 10 seconds)
+(metadata in namenode ram is getting built)
+dns available
+files written
+files-blks
+blks-which dns
+file-permission
+10:10am
+edits---4 bytes(all changes from edits are applied to fsimage)????? who does this 
+fsmimage---300 bytes---as of 10:10am(latest consistent status of ur hdfs)
+
+SNN does this...
+
+NN--has metadata in 2 places
+in ram- bitmap with dn info,file info,file-blks info, blks-dn info, file permission
+in disk-edits and fsimage (imp for nn to come up)
+
+???who does this--SNN is doing checkpointing(by default : every 1 hr which is changeable)
+Note**
+
+when u do a formatting...it creates name directory and name directory has the following
+/abc/name
+edits
+fsimage
+fstime
+VERSION-------------------->namespace ID(12345678)
+
+after u start ur cluster,dn start talking to nn
+/abc/data1
+VERSION-------------------->namespace ID(12345678)
+
+in hadoop2
+/abc/name
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+
+when u do a formatting...it creates name directory and name directory has the following
+hadoop 2 without federation or HA
+/abc/name
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+VERSION-------------------->namespace ID(12345678) + clusterid(xx)+bpoolid(for nn)
+
+
+after u start ur cluster,dn start talking to nn
+/abc/data1
+VERSION-------------------->clusterid(xx)
+=========================
+hadoop 2 with federation 
+ie multiple namenodes
+nn1
+/abc/name--bin/hadoop namenode -format 
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+VERSION-------------------->namespace ID(12345678) + clusterid(xx)+bpoolid(for nn)
+
+nn2--bin/hadoop namenode -format -clusterid xx
+/dezyre/name
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+VERSION-------------------->namespace ID(12345678-2) + clusterid(xx)+bpoolid(for nn-2)
+
+nn3---bin/hadoop namenode -format -clusterid xx
+/dezyre/name
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+VERSION-------------------->namespace ID(12345678-3) + clusterid(xx)+bpoolid(for nn-3)
+
+after u start ur cluster,dn start talking to nn
+/abc/data1
+VERSION-------------------->clusterid(xx)
+=============================
+high availability
+nn1
+nn2
+/abc/name
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+VERSION-------------------->namespace ID(12345678) + clusterid(xx)+bpoolid(for nn)
+
+nn2
+nn2
+/abc/name
+edits_04inprogress
+edits01
+fsimage01
+edits02
+fsimage02
+edits03                         
+fsimage03....
+VERSION-------------------->namespace ID(12345678) + clusterid(xx)+bpoolid(for nn)
+
+after u start ur cluster,dn start talking to nn
+/dezyre/data1
+VERSION-------------------->clusterid(xx)
+
+
+
+
+
+                                          
+						    
+
+

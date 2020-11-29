@@ -1,0 +1,94 @@
+
+setup 3-4 linux machines in ur vmbox
+each machine shud have unique ip address and update in /etc/hosts without fail.
+test ping across machines
+java installed on each machine--yum install java-1.7.0-openjdk-devel(if not inst,use this command)
+java -version: does it show java-1.7
+
+ubuntu machines: sudo apt-get install openjdk-7-jdk
+
+------------------------------------------------------------
+openssh-server installed on each machine--yum install openssh-server
+for ubuntu: sudo apt-get install openssh-server
+Downloads hadoop package
+Download some sample data
+--->
+--create a group and user across the machines
+say hadoop--group
+say hduser--userid
+
+for ubuntu:addgroup hadoop
+	   adduser --ingroup hadoop hduser
+	   passwd hduser---------------------to set pswd for hduser
+
+for centos:groupadd hadoop
+	   useradd -g hadoop hduser
+	   passwd hduser---------------------to set pswd for hduser
+-->
+generate ssh-keys
+distribute across machines
+check ssh access on machines
+
+update .bashrc with java path
+test$JAVA_HOME
+-----------------------
+
+Untar it in ur location
+create a link to ur untarred dir
+then take ur hadoop path and update in bashrc
+change path to ur hadoop path
+
+:start editing config files....
+
+remmeber to make changes in etc/hosts as per
+pseudo distributed
+or fully distribute
+
+---------------------------
+edit
+hadoop-env
+core
+mapred
+hdfs
+masters
+slaves.....
+
+bin/hadoop namenode -format
+
+start your daemons:
+bin/start-all.sh
+bin/start-dfs.sh
+bin/start-mapred.sh
+
+
+or 
+bin/hadoop-daemon.sh start daemon name
+
+merging of edits with fsimage
+1.restarting namenode
+2.when snn contacts nn and does merging of edits into fsimage and pushing new fsimage back to nn
+3.using admin commands like saveNamespace ( which needs ur namenode to be in safemode)
+4. manually telling snn to contact nn and do the merging---checkpoint force
+
+Some important commands
+bin/hadoop dfsadmin -report
+bin/hadoop fs ( -ls -mkdir -copyFromLocal -put -D dfs.replication=value -rmr -lsr -cp)
+bin/hadoop fsck / -blocks
+bin/hadoop fsck / -blocks -files
+bin/hadoop dfsadmin -saveNamespace
+bin/hadoop dfsadmin -safemode ( enter get leave wait)
+simulation of under replicated blocks
+writing file with diffrnt replication -D dfs.replication=value
+bin/hadoop dfsadmin -metasave
+bin/hadoop secondarynamenode -checkpoint force
+=================
+
+
+
+
+
+
+
+
+
+
